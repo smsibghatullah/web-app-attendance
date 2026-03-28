@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In</title>
+
+  <!-- Font Awesome for icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background-color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      padding: 40px 35px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .back-btn {
+      font-size: 22px;
+      color: #be0a26;
+      cursor: pointer;
+      display: inline-block;
+      margin-bottom: 15px;
+      transition: 0.3s;
+    }
+    .back-btn:hover {
+      transform: translateX(-3px);
+    }
+
+    .logo {
+      width: 190px; /* increased size */
+      display: block;
+      margin: 0 auto 25px;
+      border-radius: 10px;
+    }
+
+    h2 {
+      color: #222;
+      font-weight: 700;
+      font-size: 28px;
+      text-align: left;
+      margin-bottom: 5px;
+    }
+
+    p {
+      color: gray;
+      font-size: 14px;
+      text-align: left;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    .input-box {
+      background-color: #f7f8f9;
+      padding: 14px 18px;
+      margin-top: 18px;
+      border-radius: 30px;
+      border: 1px solid #e4e4e4;
+      display: flex;
+      align-items: center;
+      transition: 0.3s;
+    }
+
+    .input-box:focus-within {
+      border-color: #b9091e;
+    }
+
+    .input-box i {
+      font-size: 18px;
+      color: #888;
+    }
+
+    .input-box input {
+      border: none;
+      width: 100%;
+      background: none;
+      font-size: 16px;
+      color: #333;
+      outline: none;
+      margin-left: 10px;
+    }
+
+    .toggle-password {
+      cursor: pointer;
+      color: #888;
+      font-size: 18px;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 15px;
+      margin-top: 25px;
+      background-color: #b9091e;
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .btn-login:hover {
+      background-color: #99081a;
+    }
+
+    .alert-error {
+      background-color: #ffe6e6;
+      color: #b10000;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      border: 1px solid #ffbaba;
+    }
+
+    .alert-success {
+      background-color: #e6ffea;
+      color: #097c2d;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      border: 1px solid #baffc9;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        margin: 10px;
+        padding: 25px 20px;
+      }
+      .logo {
+        width: 150px;
+      }
+      h2 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <span class="back-btn" onclick="window.history.back()">
+      <i class="fa-solid fa-arrow-left"></i>
+    </span>
+
+    <img src="/static/logo.jpeg" class="logo" alt="Prime Solutions" />
+
+    <h2>Welcome Back</h2>
+    <p>Sign in to access your dashboard, manage tasks, and stay updated.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert-{{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/login">
+      <div class="input-box">
+        <i class="fa-solid fa-envelope"></i>
+        <input type="email" name="email" placeholder="Email Address" required />
+      </div>
+
+      <div class="input-box">
+        <i class="fa-solid fa-lock"></i>
+        <input
+          type="password"
+          name="password"
+          id="password"
+          placeholder="Password"
+          required
+        />
+        <i class="fa-solid fa-eye toggle-password" id="togglePassword"></i>
+      </div>
+
+      <button class="btn-login" type="submit">Login</button>
+    </form>
+  </div>
+
+  <script>
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("password");
+
+    togglePassword.addEventListener("click", () => {
+      const type =
+        passwordInput.getAttribute("type") === "password"
+          ? "text"
+          : "password";
+      passwordInput.setAttribute("type", type);
+      togglePassword.classList.toggle("fa-eye");
+      togglePassword.classList.toggle("fa-eye-slash");
+    });
+  </script>
+</body>
+</html>

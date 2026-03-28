@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Timesheet</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f6f9;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: #0b2a47;
+      color: white;
+      padding: 20px 24px;
+      border-radius: 0 0 25px 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-btn {
+      font-size: 22px;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .back-btn:hover {
+      color: #d6d6d6;
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 600;
+      text-align: center;
+      flex-grow: 1;
+      color: white;
+      letter-spacing: 0.5px;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid white;
+      color: white;
+      font-size: 15px;
+      padding: 8px 18px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: #ffffff22;
+    }
+
+    /* Form Container */
+    .container {
+      flex: 1;
+      padding: 30px;
+      max-width: 480px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 25px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-left: 5px;
+      display: block;
+    }
+
+    .input-field,
+    textarea.input-field {
+      width: 100%;
+      padding: 13px 15px;
+      margin-top: 6px;
+      margin-bottom: 20px;
+      border-radius: 30px;
+      border: 1px solid #ddd;
+      background: #f9fafb;
+      outline: none;
+      transition: 0.3s;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    .input-field:focus {
+      border-color: #b9091e;
+      background: #fff;
+    }
+
+    textarea.input-field {
+      resize: none;
+      height: 90px;
+    }
+
+    /* Break Buttons */
+    .break-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .break-buttons button {
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      background: #eee;
+      color: #333;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .break-buttons button.active {
+      background: #2b8e40;
+      color: white;
+    }
+
+    .break-buttons button:hover {
+      background: #ccc;
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 35px;
+      background: #b9091e;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+      margin-top: 10px;
+    }
+
+    .submit-btn:hover {
+      background: #99081a;
+    }
+
+    /* Responsive */
+    @media (max-width: 500px) {
+      .header {
+        padding: 18px;
+      }
+
+      .header-title {
+        font-size: 18px;
+      }
+
+      .container {
+        margin: 20px;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <i class="fa-solid fa-arrow-left back-btn" onclick="window.history.back()"></i>
+      <span class="header-title">Employee Timesheet</span>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- Form -->
+  <div class="container">
+    <label>Date:</label>
+    <input type="date" class="input-field" id="date" required readonly />
+
+    <label>Employee:</label>
+    <input type="text" class="input-field" id="employee" readonly />
+
+    <label>Time In:</label>
+    <input type="time" class="input-field" id="time_in" required />
+
+    <label>Time Out:</label>
+    <input type="time" class="input-field" id="time_out" required />
+
+    <label>Break Time:</label>
+    <div class="break-buttons">
+  <button type="button" onclick="setBreak(this, 0)" class="active">0 min</button>
+  <button type="button" onclick="setBreak(this, 15)">15 min</button>
+  <button type="button" onclick="setBreak(this, 30)">30 min</button>
+  <button type="button" onclick="setBreak(this, 45)">45 min</button>
+  <button type="button" onclick="setBreak(this, 60)">60 min</button>
+</div>
+
+    <label>Comment:</label>
+    <textarea
+      class="input-field"
+      id="comment"
+      placeholder="Enter your comments here..."
+    ></textarea>
+
+    <button class="submit-btn" onclick="submitTimesheet()">Submit Timesheet</button>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const localDate = new Date();
+
+      const new_date = moment(localDate).format("YYYY-MM-DD");
+
+
+      document.getElementById("date").value = new_date;
+      
+      document.getElementById("date").value = new_date;
+
+      // Load employee name from Flask variable
+      document.getElementById("employee").value = "{{ employee_name }}";
+          fetch("/get_user_attendance")
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("Attendance Data:", data);
+          if (data.attendance_today) {
+            document.querySelector(".submit-btn").style.display = "none";
+            const msg = document.createElement("p");
+            msg.innerHTML = "✅ You have already submitted today's timesheet.";
+            msg.style.color = "green";
+            msg.style.textAlign = "center";
+            document.querySelector(".container").appendChild(msg);
+          }
+        })
+        .catch((err) => console.error("Error checking attendance:", err));
+        });
+
+    let selectedBreak = 0;
+
+    function setBreak(element, min) {
+  selectedBreak = min;
+
+  document
+    .querySelectorAll(".break-buttons button")
+    .forEach((btn) => btn.classList.remove("active"));
+
+  element.classList.add("active");
+
+  console.log("Selected Break:", selectedBreak);
+}
+
+    const formatDateForOdoo = (date, time) => {
+        const dateTimeLocal = moment(`${date} ${time}`, "YYYY-MM-DD HH:mm");
+        const utcDate = dateTimeLocal.utc();
+        return utcDate.format("YYYY-MM-DD HH:mm:ss");
+    };
+
+    function submitTimesheet() {
+        const date = document.getElementById("date").value;
+        const timeIn = document.getElementById("time_in").value;
+        const timeOut = document.getElementById("time_out").value;
+        const comment = document.getElementById("comment").value;
+
+        if (!date || !timeIn || !timeOut) {
+        alert("⚠️ Please fill in all required fields");
+        return;
+        }
+
+        if (timeIn >= timeOut) {
+        alert("⚠️ Time In must be earlier than Time Out");
+        return;
+        }
+
+        const formattedTimeIn = formatDateForOdoo(date, timeIn);
+        const formattedTimeOut = formatDateForOdoo(date, timeOut);
+
+        const payload = {
+        date: date,
+        time_in: formattedTimeIn,
+        time_out: formattedTimeOut,
+        break_time: selectedBreak,
+        comment: comment,
+        };
+
+        fetch("/submit_timesheet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        })
+        .then((r) => r.json())
+        .then((data) => {
+            if (data.success) {
+            alert("✅ Timesheet Submitted Successfully!");
+            } else {
+            alert("❌ Failed: " + data.message);
+            }
+        })
+        .catch((err) => alert("⚠️ Error: " + err));
+
+ document.getElementById("employee").value = "{{ employee_name }}";
+          fetch("/get_user_attendance")
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("Attendance Data:", data);
+          if (data.attendance_today) {
+            document.querySelector(".submit-btn").style.display = "none";
+            const msg = document.createElement("p");
+            msg.innerHTML = "✅ You have already submitted today's timesheet.";
+            msg.style.color = "green";
+            msg.style.textAlign = "center";
+            document.querySelector(".container").appendChild(msg);
+          }
+        })
+        .catch((err) => console.error("Error checking attendance:", err));
+
+    }
+
+    function logout() {
+      if (confirm("Are you sure you want to logout?")) {
+        window.location.href = "/logout";
+      }
+    }
+  </script>
+</body>
+</html>

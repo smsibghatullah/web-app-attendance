@@ -191,6 +191,7 @@
       <i class="fa-solid fa-arrow-left back-btn" onclick="window.history.back()"></i>
       <span class="header-title">Employee Timesheet</span>
     </div>
+    <button class="logout-btn" onclick="openAttendance()">Attendance</button>
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
@@ -341,6 +342,10 @@
         window.location.href = "/logout";
       }
     }
+
+    function openAttendance() {
+        window.location.href = "/attendance";
+      }
   </script>
 </body>
 </html>

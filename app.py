@@ -20,6 +20,66 @@ def home():
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
+@app.route('/attendance')
+def attendance_page():
+    user_id = session['uid']
+    if 'access_token' not in session:
+        return redirect(url_for('login'))
+
+    return render_template('attendance.html')
+
+@app.route('/get_user_attendance_by_group', methods=['GET'])
+def get_user_attendance_by_group():
+    """Fetch attendance from Odoo custom API"""
+    print("calling======================================")
+
+    if 'access_token' not in session or 'uid' not in session:
+        return redirect(url_for('login'))
+
+    headers = {
+        'Content-Type': 'application/json',
+        'access-token': session['access_token']
+    }
+
+    user_id = session['uid']
+
+    payload = {
+        "user_id": user_id
+    }
+
+    print(user_id,"==========================================================")
+
+    url = f"{BASE_URL}/api/user/attendance"
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code != 200:
+        return {
+            "success": False,
+            "message": "Failed to fetch attendance"
+        }
+
+    result = response.json()
+    result = result.get("result")
+    print(result,"====================================result")
+
+    if not result.get("status"):
+        return {
+            "success": False,
+            "message": result.get("message")
+        }
+
+    records = result.get("data", [])
+
+    today_str = datetime.utcnow().strftime("%Y-%m-%d")
+
+    attendance_today = any(
+        rec.get("checkin") and today_str in rec.get("checkin")
+        for rec in records
+    )
+
+    return records    
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':

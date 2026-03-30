@@ -107,168 +107,171 @@ body { font-family: "Poppins", sans-serif; margin: 0; background: #f4f6f9; }
 </div>
 
 <script>
-function decimalToTime(decimal) {
-  if (!decimal) return "00:00";
-  const h = Math.floor(decimal);
-  const m = Math.round((decimal - h) * 60);
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-}
-
-function formatTime(dt) { return dt ? moment.utc(dt).format("HH:mm") : "-"; }
-function formatDate(dt) { return dt ? moment.utc(dt).format("YYYY-MM-DD") : "-"; }
-
-function toggleTree(el) {
-  const content = el.nextElementSibling;
-  const arrow = el.querySelector(".arrow");
-
-  if (content.style.display === "block") {
-    content.style.display = "none";
-    arrow.classList.remove("rotate");
-  } else {
-    content.style.display = "block";
-    arrow.classList.add("rotate");
+  function decimalToTime(decimal) {
+    if (!decimal) return "00:00";
+    const h = Math.floor(decimal);
+    const m = Math.round((decimal - h) * 60);
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   }
-}
-
-function loadAttendance() {
-  fetch("/get_user_attendance_by_group")
-    .then(res => res.json())
-    .then(data => {
-
-      const loader = document.getElementById("loader");
-      const tree = document.getElementById("treeContainer");
-      const empNameEl = document.getElementById("employeeName");
-
-      loader.style.display = "none";
-      tree.innerHTML = "";
-
-      if (!data.length) {
-        empNameEl.innerText = "No data";
-        return;
-      }
-
-      empNameEl.innerText = data[0].employee_name;
-
-      // ✅ WEEK GROUPING
-      const grouped = {};
-
-      data.forEach(rec => {
-        const m = moment.utc(rec.checkin);
-
-        const weekStart = m.clone().startOf('isoWeek').format("YYYY-MM-DD");
-        const weekEnd = m.clone().endOf('isoWeek').format("YYYY-MM-DD");
-
-        const weekKey = `${weekStart} to ${weekEnd}`;
-
-        if (!grouped[weekKey]) grouped[weekKey] = [];
-        grouped[weekKey].push(rec);
-      });
-
-      Object.keys(grouped).sort().reverse().forEach((week,index) => {
-
-        const records = grouped[week];
-        let weeklyTotal = 0;
-
-        const dateGrouped = {};
-
-        records.forEach(rec => {
-          const date = formatDate(rec.checkin);
-          if (!dateGrouped[date]) dateGrouped[date] = [];
-          dateGrouped[date].push(rec);
+  
+  function formatTime(dt) { return dt ? moment.utc(dt).format("HH:mm") : "-"; }
+  function formatDate(dt) { return dt ? moment.utc(dt).format("YYYY-MM-DD") : "-"; }
+  
+  function toggleTree(el) {
+    const content = el.nextElementSibling;
+    const arrow = el.querySelector(".arrow");
+  
+    if (content.style.display === "block") {
+      content.style.display = "none";
+      arrow.classList.remove("rotate");
+    } else {
+      content.style.display = "block";
+      arrow.classList.add("rotate");
+    }
+  }
+  
+  function loadAttendance() {
+    fetch("/get_user_attendance_by_group")
+      .then(res => res.json())
+      .then(data => {
+  
+        const loader = document.getElementById("loader");
+        const tree = document.getElementById("treeContainer");
+        const empNameEl = document.getElementById("employeeName");
+  
+        loader.style.display = "none";
+        tree.innerHTML = "";
+  
+        if (!data.length) {
+          empNameEl.innerText = "No data";
+          return;
+        }
+  
+        empNameEl.innerText = data[0].employee_name;
+  
+        // ✅ WEEK GROUPING: Wednesday → Tuesday
+        const grouped = {};
+  
+        data.forEach(rec => {
+          const m = moment.utc(rec.checkin);
+          const day = m.isoWeekday(); // 1=Mon ... 7=Sun
+          let weekStart;
+  
+          if (day === 3) {
+            weekStart = m.clone(); // Wednesday → same day
+          } else if (day > 3) {
+            weekStart = m.clone().subtract(day - 3, "days"); // Thu-Sun → previous Wednesday
+          } else {
+            weekStart = m.clone().subtract(day + 4, "days"); // Mon-Tue → previous week's Wednesday
+          }
+  
+          const weekEnd = weekStart.clone().add(6, "days"); // Wednesday → next Tuesday
+          const weekKey = `${weekStart.format("YYYY-MM-DD")} to ${weekEnd.format("YYYY-MM-DD")}`;
+  
+          if (!grouped[weekKey]) grouped[weekKey] = [];
+          grouped[weekKey].push(rec);
         });
-
-        let weekHTML = "";
-
-        Object.keys(dateGrouped).sort().reverse().forEach(date => {
-
-          let dailyTotal = 0;
-          let recordsHTML = "";
-
-          console.log(dateGrouped,"=============================dateGrouped")
-
-          dateGrouped[date].forEach(rec => {
-
-            // ✅ YOUR ORIGINAL CONDITION (FIXED)
-            let workedVal = rec.worked_hours || 0;
-            let workedLabel = decimalToTime(workedVal);
-            let workedClass = 'worked-label';
-            let workedTitle = 'Worked';
-
-            if (!rec.worked_hours) {
-              workedVal = rec.immigration_submitted_hrs || 0;
-              workedLabel = decimalToTime(workedVal);
-              workedTitle = 'Immigration Submitted Hours';
-              workedClass = 'immigration-worked';
-            }
-
-            let approvedVal = rec.approved_hours || 0;
-            let approvedLabel = decimalToTime(approvedVal);
-            let approvedClass = 'approved-label';
-            let approvedTitle = 'Approved';
-
-            if (!rec.approved_hours) {
-              approvedVal = rec.immigration_approved_hrs || 0;
-              approvedLabel = decimalToTime(approvedVal);
-              approvedTitle = 'Immigration Approved Hours';
-              approvedClass = 'immigration-approved';
-            }
-
-            dailyTotal += approvedVal;
-            weeklyTotal += approvedVal;
-
-            recordsHTML += `
-              <div class="record">
-                <div><b>Time:</b> ${formatTime(rec.checkin)} - ${formatTime(rec.checkout)}</div>
-                <div><b>${workedTitle}:</b> <span class="${workedClass}">${workedLabel} hrs</span></div>
-                <div><b>${approvedTitle}:</b> <span class="${approvedClass}">${approvedLabel} hrs</span></div>
-                <div><b>Comment:</b> ${rec.comment || "-"}</div>
+  
+        // SORT WEEKS DESCENDING
+        Object.keys(grouped).sort().reverse().forEach((week, index) => {
+          const records = grouped[week];
+          let weeklyTotal = 0;
+          const dateGrouped = {};
+  
+          // Group by date
+          records.forEach(rec => {
+            const date = formatDate(rec.checkin);
+            if (!dateGrouped[date]) dateGrouped[date] = [];
+            dateGrouped[date].push(rec);
+          });
+  
+          let weekHTML = "";
+          Object.keys(dateGrouped).sort().reverse().forEach(date => {
+            let dailyTotal = 0;
+            let recordsHTML = "";
+  
+            dateGrouped[date].forEach(rec => {
+              let workedVal = rec.worked_hours || 0;
+              let workedLabel = decimalToTime(workedVal);
+              let workedClass = 'worked-label';
+              let workedTitle = 'Worked';
+  
+              if (!rec.worked_hours) {
+                workedVal = rec.immigration_submitted_hrs || 0;
+                workedLabel = decimalToTime(workedVal);
+                workedTitle = 'Immigration Submitted Hours';
+                workedClass = 'immigration-worked';
+              }
+  
+              let approvedVal = rec.approved_hours || 0;
+              let approvedLabel = decimalToTime(approvedVal);
+              let approvedClass = 'approved-label';
+              let approvedTitle = 'Approved';
+  
+              if (!rec.approved_hours) {
+                approvedVal = rec.immigration_approved_hrs || 0;
+                approvedLabel = decimalToTime(approvedVal);
+                approvedTitle = 'Immigration Approved Hours';
+                approvedClass = 'immigration-approved';
+              }
+  
+              dailyTotal += approvedVal;
+              weeklyTotal += approvedVal;
+  
+              recordsHTML += `
+                <div class="record">
+                  <div><b>Time:</b> ${formatTime(rec.checkin)} - ${formatTime(rec.checkout)}</div>
+                  <div><b>${workedTitle}:</b> <span class="${workedClass}">${workedLabel} hrs</span></div>
+                  <div><b>${approvedTitle}:</b> <span class="${approvedClass}">${approvedLabel} hrs</span></div>
+                  <div><b>Comment:</b> ${rec.comment || "-"}</div>
+                </div>
+              `;
+            });
+  
+            weekHTML += `
+              <div class="tree-item" style="margin-left:15px;">
+                <div class="tree-header" onclick="toggleTree(this)">
+                  <span>${date} (Total: ${decimalToTime(dailyTotal)} hrs)</span>
+                  <i class="fa fa-chevron-right arrow"></i>
+                </div>
+                <div class="tree-content">
+                  ${recordsHTML}
+                </div>
               </div>
             `;
           });
-
-          weekHTML += `
-            <div class="tree-item" style="margin-left:15px;">
+  
+          const isOpen = index === 0 ? "block" : "none";
+          const rotate = index === 0 ? "rotate" : "";
+  
+          tree.innerHTML += `
+            <div class="tree-item">
               <div class="tree-header" onclick="toggleTree(this)">
-                <span>${date} (Total: ${decimalToTime(dailyTotal)} hrs)</span>
-                <i class="fa fa-chevron-right arrow"></i>
+                <span>Week: ${week} (<span class="total-approved">${decimalToTime(weeklyTotal)} hrs</span>)</span>
+                <i class="fa fa-chevron-right arrow ${rotate}"></i>
               </div>
-              <div class="tree-content">
-                ${recordsHTML}
+              <div class="tree-content" style="display:${isOpen}">
+                ${weekHTML}
               </div>
             </div>
           `;
         });
-
-        const isOpen = index === 0 ? "block" : "none";
-        const rotate = index === 0 ? "rotate" : "";
-
-        tree.innerHTML += `
-          <div class="tree-item">
-            <div class="tree-header" onclick="toggleTree(this)">
-              <span>Week: ${week} (<span class="total-approved">${decimalToTime(weeklyTotal)} hrs</span>)</span>
-              <i class="fa fa-chevron-right arrow ${rotate}"></i>
-            </div>
-            <div class="tree-content" style="display:${isOpen}">
-              ${weekHTML}
-            </div>
-          </div>
-        `;
+  
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById("loader").innerText = "Error loading data";
       });
-
-    })
-    .catch(err => {
-      console.error(err);
-      document.getElementById("loader").innerText = "Error loading data";
-    });
-}
-
-document.addEventListener("DOMContentLoaded", loadAttendance);
-function logout() {
-      if (confirm("Are you sure you want to logout?")) {
-        window.location.href = "/logout";
-      }
+  }
+  
+  document.addEventListener("DOMContentLoaded", loadAttendance);
+  
+  function logout() {
+    if (confirm("Are you sure you want to logout?")) {
+      window.location.href = "/logout";
     }
-</script>
+  }
+  </script>
 
 </body>
 </html>

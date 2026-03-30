@@ -71,12 +71,6 @@ def get_user_attendance_by_group():
 
     records = result.get("data", [])
 
-    today_str = datetime.utcnow().strftime("%Y-%m-%d")
-
-    attendance_today = any(
-        rec.get("checkin") and today_str in rec.get("checkin")
-        for rec in records
-    )
 
     return records    
 

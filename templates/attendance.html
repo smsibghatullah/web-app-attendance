@@ -3,65 +3,54 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Attendance Tree View</title>
+<title>Attendance Weekly View</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 
 <style>
 body { font-family: "Poppins", sans-serif; margin: 0; background: #f4f6f9; }
-.header { background: #0b2a47; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
+.header { background: #0b2a47; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
 .header-left { display: flex; align-items: center; gap: 12px; }
 .header-title { font-size: 20px; font-weight: 600; }
-.employee-name { font-size: 14px; color: #ffd369; margin-top: 2px; }
-.back-btn { cursor: pointer; font-size: 18px; }
-.logout-btn {
-      background: transparent;
-      border: 1px solid white;
-      color: white;
-      font-size: 15px;
-      padding: 8px 18px;
-      border-radius: 25px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .logout-btn:hover {
-      background: #ffffff22;
-    }
-
+.employee-name { font-size: 14px; color: #ffd369; }
 
 .container { padding: 20px; }
-.tree { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 18px rgba(0,0,0,0.1); }
-.tree-item { margin-bottom: 12px; border-radius: 10px; overflow: hidden; transition: 0.3s; }
-.tree-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-.tree-header { padding: 14px 18px; cursor: pointer; font-weight: 600; display: flex; justify-content: space-between; background: #eef2f7; border-bottom: 1px solid #ddd; border-radius: 8px; transition: 0.3s; }
-.tree-header:hover { background: #e1e6ef; }
-.tree-content { display: none; padding: 12px 18px; background: #f9f9f9; border-radius: 8px; }
-.record { padding: 12px; margin-bottom: 10px; border-left: 4px solid #0b2a47; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 14px; }
-.record div { margin-bottom: 6px; }
-.record div span { font-weight: 600; }
+.tree { background: white; border-radius: 15px; padding: 15px; }
+.tree-item { margin-bottom: 10px; }
+.tree-header { padding: 12px; cursor: pointer; display: flex; justify-content: space-between; background: #eef2f7; border-radius: 8px; }
+.tree-content { display: none; padding: 10px; }
+
+.record {
+  padding: 10px;
+  margin-bottom: 8px;
+  border-left: 4px solid #0b2a47;
+  background: white;
+  border-radius: 6px;
+}
+
 .worked-label { color: #0b2a47; }
 .immigration-worked { color: #ff9800; }
 .approved-label { color: #00796b; }
 .immigration-approved { color: #4caf50; }
+
 .arrow { transition: 0.3s; }
 .rotate { transform: rotate(90deg); }
-.loader { text-align: center; margin-top: 50px; color: #777; font-size: 16px; }
-.total-approved { font-weight: 600; color: #0b2a47; }
+
+.loader { text-align: center; margin-top: 50px; }
+.total-approved { font-weight: bold; color: #0b2a47; }
 </style>
 </head>
+
 <body>
 
 <div class="header">
   <div class="header-left">
-    <i class="fa-solid fa-arrow-left back-btn" onclick="goBack()"></i>
     <div>
       <div class="header-title">Attendance</div>
       <div class="employee-name" id="employeeName">Loading...</div>
     </div>
   </div>
-  <button class="logout-btn" onclick="logout()">Logout</button>
 </div>
 
 <div class="container">
@@ -70,11 +59,8 @@ body { font-family: "Poppins", sans-serif; margin: 0; background: #f4f6f9; }
 </div>
 
 <script>
-function goBack() { window.location.href = "/"; }
-function logout() { if (confirm("Logout?")) window.location.href = "/logout"; }
-
 function decimalToTime(decimal) {
-  if (decimal === null || decimal === undefined) return "-";
+  if (!decimal) return "00:00";
   const h = Math.floor(decimal);
   const m = Math.round((decimal - h) * 60);
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
@@ -86,92 +72,145 @@ function formatDate(dt) { return dt ? moment.utc(dt).format("YYYY-MM-DD") : "-";
 function toggleTree(el) {
   const content = el.nextElementSibling;
   const arrow = el.querySelector(".arrow");
-  if (content.style.display === "block") { content.style.display = "none"; arrow.classList.remove("rotate"); }
-  else { content.style.display = "block"; arrow.classList.add("rotate"); }
+
+  if (content.style.display === "block") {
+    content.style.display = "none";
+    arrow.classList.remove("rotate");
+  } else {
+    content.style.display = "block";
+    arrow.classList.add("rotate");
+  }
 }
 
 function loadAttendance() {
   fetch("/get_user_attendance_by_group")
     .then(res => res.json())
     .then(data => {
+
       const loader = document.getElementById("loader");
       const tree = document.getElementById("treeContainer");
       const empNameEl = document.getElementById("employeeName");
+
       loader.style.display = "none";
       tree.innerHTML = "";
 
-      if (!Array.isArray(data) || data.length === 0) {
-        empNameEl.innerText = "No attendance found";
+      if (!data.length) {
+        empNameEl.innerText = "No data";
         return;
       }
 
-      empNameEl.innerText = data[0].employee_name || "Unknown";
+      empNameEl.innerText = data[0].employee_name;
 
+      // ✅ WEEK GROUPING
       const grouped = {};
+
       data.forEach(rec => {
-        const date = formatDate(rec.checkin);
-        if (!grouped[date]) grouped[date] = [];
-        grouped[date].push(rec);
+        const m = moment.utc(rec.checkin);
+
+        const weekStart = m.clone().startOf('isoWeek').format("YYYY-MM-DD");
+        const weekEnd = m.clone().endOf('isoWeek').format("YYYY-MM-DD");
+
+        const weekKey = `${weekStart} to ${weekEnd}`;
+
+        if (!grouped[weekKey]) grouped[weekKey] = [];
+        grouped[weekKey].push(rec);
       });
 
-      Object.keys(grouped).sort().reverse().forEach((date,index) => {
-        const records = grouped[date];
-        let totalApproved = 0;
-        let contentHTML = "";
+      Object.keys(grouped).sort().reverse().forEach((week,index) => {
+
+        const records = grouped[week];
+        let weeklyTotal = 0;
+
+        const dateGrouped = {};
 
         records.forEach(rec => {
-          let workedVal = rec.worked_hours || 0;
-          let workedLabel = decimalToTime(workedVal);
-          let workedClass = 'worked-label';
-          let workedTitle = 'Worked';
-          if (!rec.worked_hours) {
-            workedVal = rec.immigration_submitted_hrs;
-            workedLabel = decimalToTime(workedVal);
-            workedTitle = 'Immigration Submitted Hours';
-            workedClass = 'immigration-worked';
-          }
+          const date = formatDate(rec.checkin);
+          if (!dateGrouped[date]) dateGrouped[date] = [];
+          dateGrouped[date].push(rec);
+        });
 
-          let approvedVal = rec.approved_hours || 0;
-          let approvedLabel = decimalToTime(approvedVal);
-          let approvedClass = 'approved-label';
-          let approvedTitle = 'Approved';
-          if (!rec.approved_hours) {
-            approvedVal = rec.immigration_approved_hrs;
-            approvedLabel = decimalToTime(approvedVal);
-            approvedTitle = 'Immigration Approved Hours';
-            approvedClass = 'immigration-approved';
-          }
+        let weekHTML = "";
 
-          totalApproved += parseFloat(rec.approved_hours || rec.immigration_approved_hrs || 0);
+        Object.keys(dateGrouped).sort().reverse().forEach(date => {
 
-          contentHTML += `
-            <div class="record">
-              <div><span>Time:</span> ${formatTime(rec.checkin)} - ${formatTime(rec.checkout)}</div>
-              <div><span>${workedTitle}:</span> <span class="${workedClass}">${workedLabel} hrs</span></div>
-              <div><span>${approvedTitle}:</span> <span class="${approvedClass}">${approvedLabel} hrs</span></div>
-              <div><span>Comment:</span> ${rec.comment || "-"}</div>
+          let dailyTotal = 0;
+          let recordsHTML = "";
+
+          console.log(dateGrouped,"=============================dateGrouped")
+
+          dateGrouped[date].forEach(rec => {
+
+            // ✅ YOUR ORIGINAL CONDITION (FIXED)
+            let workedVal = rec.worked_hours || 0;
+            let workedLabel = decimalToTime(workedVal);
+            let workedClass = 'worked-label';
+            let workedTitle = 'Worked';
+
+            if (!rec.worked_hours) {
+              workedVal = rec.immigration_submitted_hrs || 0;
+              workedLabel = decimalToTime(workedVal);
+              workedTitle = 'Immigration Submitted Hours';
+              workedClass = 'immigration-worked';
+            }
+
+            let approvedVal = rec.approved_hours || 0;
+            let approvedLabel = decimalToTime(approvedVal);
+            let approvedClass = 'approved-label';
+            let approvedTitle = 'Approved';
+
+            if (!rec.approved_hours) {
+              approvedVal = rec.immigration_approved_hrs || 0;
+              approvedLabel = decimalToTime(approvedVal);
+              approvedTitle = 'Immigration Approved Hours';
+              approvedClass = 'immigration-approved';
+            }
+
+            dailyTotal += approvedVal;
+            weeklyTotal += approvedVal;
+
+            recordsHTML += `
+              <div class="record">
+                <div><b>Time:</b> ${formatTime(rec.checkin)} - ${formatTime(rec.checkout)}</div>
+                <div><b>${workedTitle}:</b> <span class="${workedClass}">${workedLabel} hrs</span></div>
+                <div><b>${approvedTitle}:</b> <span class="${approvedClass}">${approvedLabel} hrs</span></div>
+                <div><b>Comment:</b> ${rec.comment || "-"}</div>
+              </div>
+            `;
+          });
+
+          weekHTML += `
+            <div class="tree-item" style="margin-left:15px;">
+              <div class="tree-header" onclick="toggleTree(this)">
+                <span>${date} (Total: ${decimalToTime(dailyTotal)} hrs)</span>
+                <i class="fa fa-chevron-right arrow"></i>
+              </div>
+              <div class="tree-content">
+                ${recordsHTML}
+              </div>
             </div>
           `;
         });
 
-        const isOpen = index===0 ? "block" : "none";
-        const rotate = index===0 ? "rotate" : "";
+        const isOpen = index === 0 ? "block" : "none";
+        const rotate = index === 0 ? "rotate" : "";
 
         tree.innerHTML += `
           <div class="tree-item">
             <div class="tree-header" onclick="toggleTree(this)">
-              <span>${date} (<span class="total-approved">Total Approved: ${decimalToTime(totalApproved)} hrs</span>)</span>
+              <span>Week: ${week} (<span class="total-approved">${decimalToTime(weeklyTotal)} hrs</span>)</span>
               <i class="fa fa-chevron-right arrow ${rotate}"></i>
             </div>
             <div class="tree-content" style="display:${isOpen}">
-              ${contentHTML}
+              ${weekHTML}
             </div>
-          </div>`;
+          </div>
+        `;
       });
+
     })
     .catch(err => {
       console.error(err);
-      document.getElementById("loader").innerHTML = "Error loading data";
+      document.getElementById("loader").innerText = "Error loading data";
     });
 }
 

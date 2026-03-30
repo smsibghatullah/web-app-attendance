@@ -10,9 +10,37 @@
 
 <style>
 body { font-family: "Poppins", sans-serif; margin: 0; background: #f4f6f9; }
-.header { background: #0b2a47; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-.header-left { display: flex; align-items: center; gap: 12px; }
-.header-title { font-size: 20px; font-weight: 600; }
+.header {
+      background: #0b2a47;
+      color: white;
+      padding: 20px 24px;
+      border-radius: 0 0 25px 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-btn {
+      font-size: 22px;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .back-btn:hover {
+      color: #d6d6d6;
+    }
+
 .employee-name { font-size: 14px; color: #ffd369; }
 
 .container { padding: 20px; }
@@ -36,6 +64,21 @@ body { font-family: "Poppins", sans-serif; margin: 0; background: #f4f6f9; }
 
 .arrow { transition: 0.3s; }
 .rotate { transform: rotate(90deg); }
+.logout-btn {
+      background: transparent;
+      border: 1px solid white;
+      color: white;
+      font-size: 15px;
+      padding: 8px 18px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: #ffffff22;
+    }
+
 
 .loader { text-align: center; margin-top: 50px; }
 .total-approved { font-weight: bold; color: #0b2a47; }
@@ -44,12 +87,17 @@ body { font-family: "Poppins", sans-serif; margin: 0; background: #f4f6f9; }
 
 <body>
 
+
+
 <div class="header">
   <div class="header-left">
-    <div>
-      <div class="header-title">Attendance</div>
-      <div class="employee-name" id="employeeName">Loading...</div>
-    </div>
+    <i class="fa-solid fa-arrow-left back-btn" onclick="window.history.back()"></i>
+    <span class="header-title">Attendance</span>
+    <div class="employee-name" id="employeeName">Loading...</div>
+  </div>
+
+  <div style="display:flex; gap:10px;">
+    <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 </div>
 
@@ -215,6 +263,11 @@ function loadAttendance() {
 }
 
 document.addEventListener("DOMContentLoaded", loadAttendance);
+function logout() {
+      if (confirm("Are you sure you want to logout?")) {
+        window.location.href = "/logout";
+      }
+    }
 </script>
 
 </body>
